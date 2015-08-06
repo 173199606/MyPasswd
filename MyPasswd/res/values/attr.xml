@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <declare-styleable name="LockPointStyle">
+        <attr name="ncount"  format="integer"/>
+        <attr name="trytime"  format="integer"/>
+    </declare-styleable>
+    
+    
+</resources>

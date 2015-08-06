@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_color">#000</color>
+    <color name="default_circle">#FFFFFF</color>
+    <color name="small_right_circle">#00A0E5</color>
+    <color name="big_right_circle">#ADD5E6</color>
+    <color name="small_wrong_circle">#F7564A</color>
+    <color name="big_wrong_circle">#EDACA7</color>
+</resources>
