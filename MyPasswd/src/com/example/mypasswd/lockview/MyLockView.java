@@ -1,6 +1,9 @@
 package com.example.mypasswd.lockview;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.R.integer;
 import android.content.Context;
@@ -11,6 +14,8 @@ import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -18,6 +23,7 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.example.mypasswd.MyApplication;
 import com.example.mypasswd.R;
 import com.example.mypasswd.lockview.MyLockPoint.Mode;
 import com.example.mypasswd.lockview.MyLockView.OnGestureLockListener;
@@ -29,6 +35,7 @@ public class MyLockView extends LinearLayout {
 	ArrayList<MyLockPoint> lockPoints = new ArrayList<MyLockPoint>();
 	int mTryTime = -1;
 	static int mCount;
+	int mLockType;
 	// viewgroup的宽度
 	int mViewWidth = 0;
 	int padding = 0;
@@ -40,10 +47,14 @@ public class MyLockView extends LinearLayout {
 	// 手指移动到的位置
 	private int mLastPathX;
 	private int mLastPathY;
-	int expected_answer[] = new int[] { 5, 3, 7, 6 };
+	
 	ArrayList<Integer> real_answer = new ArrayList<Integer>();
+	private MyHandler myHandler = new MyHandler();
 	private OnGestureLockListener mGestureLockListener;
-
+	private OnSetPasswdListener mPasswdListener;
+	
+	ArrayList<Integer> first_passwd_setted = new ArrayList<Integer>();
+	
 	public final static int UNLOCKED = 1;
 	public final static int UNLOCK_FAILED = 2;
 
@@ -63,6 +74,12 @@ public class MyLockView extends LinearLayout {
 				R.styleable.LockPointStyle);
 		mCount = a.getInt(R.styleable.LockPointStyle_ncount, 3);
 		mTryTime = a.getInt(R.styleable.LockPointStyle_trytime, 5);
+		
+		mLockType = a.getInt(R.styleable.LockPointStyle_type, 0);
+		if (mLockType == 0) {
+			mTryTime = 2;//if set passwd, just need two times
+		}
+
 		a.recycle();
 	}
 
@@ -128,24 +145,59 @@ public class MyLockView extends LinearLayout {
 				break;
 			case MotionEvent.ACTION_UP:
 				if (isValidMove) {
-					// 如果解锁失败，就改变所有选中点和连线颜色，否则颜色不变
-					if (!isUnLocked()) {
-						for (MyLockPoint myLockPoint : lockPoints) {
-							if (myLockPoint.isChoosed) {
-								myLockPoint
-										.setmCurrentStatus(Mode.STATUS_FINGER_UP_WRONG);
+					if (mLockType == 1) {
+						// 如果解锁失败，就改变所有选中点和连线颜色，否则颜色不变
+						if (!isUnLocked()) {
+							for (MyLockPoint myLockPoint : lockPoints) {
+								if (myLockPoint.isChoosed) {
+									myLockPoint
+											.setmCurrentStatus(Mode.STATUS_FINGER_UP_WRONG);
+								}
+								// 和mPaint_smallCircle的颜色一样
+								mPaint.setColor(getResources().getColor(
+										R.color.small_wrong_circle));
 							}
-							// 和mPaint_smallCircle的颜色一样
-							mPaint.setColor(getResources().getColor(
-									R.color.small_wrong_circle));
+							mGestureLockListener.onLockEvent(UNLOCK_FAILED,
+									--mTryTime >= 0 ? mTryTime : 0);
+							Log.i("xxj", "UNLOCK_FAILED");
+						} else {
+							Log.i("xxj", "UNLOCKED");
+							mGestureLockListener.onLockEvent(UNLOCKED, mTryTime);
 						}
-						mGestureLockListener.onLockEvent(UNLOCK_FAILED,
-								--mTryTime >= 0 ? mTryTime : 0);
-						Log.i("xxj", "UNLOCK_FAILED");
 					} else {
-						Log.i("xxj", "UNLOCKED");
-						mGestureLockListener.onLockEvent(UNLOCKED, mTryTime);
+						//设置password模式
+						Utils.getInstance(mContext).setPasswd(real_answer);
+						System.out.println(Utils.getInstance(mContext).getPasswd());
+						if (mTryTime-- == 2) {
+							first_passwd_setted = Utils.getInstance(mContext).getPasswd();
+						} else {
+							boolean bSuccess = false;
+							if (Utils.getInstance(mContext).getPasswd().equals(first_passwd_setted)) {
+								bSuccess = true;
+							} else {
+								 bSuccess = false;
+								 // set the color(red) to show the two password is not the same
+								 for (MyLockPoint myLockPoint : lockPoints) {
+										if (myLockPoint.isChoosed) {
+											myLockPoint
+													.setmCurrentStatus(Mode.STATUS_FINGER_UP_WRONG);
+										}
+										// 和mPaint_smallCircle的颜色一样
+										mPaint.setColor(getResources().getColor(
+												R.color.small_wrong_circle));
+								}
+							}
+							if (mPasswdListener != null) {
+								mPasswdListener.onPasswdEvent(bSuccess);
+							}
+						}
+						if (mTryTime == 0) {
+							//should give another chance to set password again
+							mTryTime = 2;
+						}
+						
 					}
+					
 					if (mLastLockPoint != null) {
 						// 设置mLastPathX、mLastPathY，当ACTION_UP时，就不会画指引线了
 						mLastPathX = (int) (mLastLockPoint.getX() + mLastLockPoint
@@ -154,10 +206,18 @@ public class MyLockView extends LinearLayout {
 								.getmRadius());
 					}
 				}
+				
+				
+				new Timer().schedule(new TimerTask() {
+					@Override
+					public void run() {
+						myHandler.sendEmptyMessage(0);
+					}
+				}, 800);
+				
 				break;
 			case MotionEvent.ACTION_MOVE:
 				if (isValidMove) {
-					// Log.i("xxj","move");
 					// 和mPaint_smallCircle的颜色一样
 					mPaint.setColor(getResources().getColor(
 							R.color.small_right_circle));
@@ -236,26 +296,45 @@ public class MyLockView extends LinearLayout {
 					mLastPathX, mLastPathY, mPaint);
 		}
 		
-		if (mTryTime<=0) {
+		if (mTryTime<=0 && mLockType != 0) {
 			disableLockView(canvas);
 		}
 
 	}
 
 	private boolean isUnLocked() {
-		if (expected_answer.length != real_answer.size()) {
-			return false;
+		ArrayList<Integer> expected_answer = Utils.getInstance(mContext).getPasswd();
+		if (expected_answer.equals(real_answer)) {
+			return true;
 		}
-		for (int i = 0; i < expected_answer.length; i++) {
-			if (expected_answer[i] != (int) real_answer.get(i)) {
-				return false;
-			}
+//		if (expected_answer.size() != real_answer.size()) {
+//			return false;
+//		}
+//		for (int i = 0; i < expected_answer.length; i++) {
+//			if (expected_answer[i] != (int) real_answer.get(i)) {
+//				return false;
+//			}
+//		}
+		return false;
+	}
+	
+	
+	class MyHandler extends Handler {
+		@Override
+		public void handleMessage(Message msg) {
+			super.handleMessage(msg);
+			reset();
+			invalidate();
 		}
-		return true;
+		
 	}
 
 	public void setOnGestureLockListener(OnGestureLockListener l) {
 		mGestureLockListener = l;
+	}
+	
+	public void setOnSetPasswdListener(OnSetPasswdListener l) {
+		mPasswdListener = l;
 	}
 
 	public interface OnGestureLockListener {
@@ -267,6 +346,15 @@ public class MyLockView extends LinearLayout {
 		 *            : 剩余次数
 		 */
 		public void onLockEvent(int lockEvent, int times);
+	}
+	
+	public interface OnSetPasswdListener {
+		/**
+		 * 
+		 * @param bSuccess
+		 *            : the password set successfully
+		 */
+		public void onPasswdEvent(boolean bSuccess);
 	}
 
 }

@@ -4,6 +4,12 @@
     <declare-styleable name="LockPointStyle">
         <attr name="ncount"  format="integer"/>
         <attr name="trytime"  format="integer"/>
+	    <attr name="type">
+	        <!-- set password, default value. -->
+	        <enum name="set" value="0" />
+	        <!-- lock view. -->
+	        <enum name="lock" value="1" />
+	    </attr>
     </declare-styleable>
     
     

@@ -1,11 +1,19 @@
 package com.example.mypasswd.lockview;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import android.R.integer;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.content.Context;
+import android.content.SharedPreferences;
 
 public class Utils {
 	private static Utils instance = null;
@@ -68,4 +76,26 @@ public class Utils {
 		return false;
 	}
 	
+	public ArrayList<Integer> getPasswd() {
+		ArrayList<Integer> ret = new ArrayList<Integer>();
+		SharedPreferences sp = mContext.getSharedPreferences("passwd", 0);
+		String temp = sp.getString("gesture", null);
+		if (temp != null) {
+			String[] list = temp.split(",");
+			for(int i=0;i<list.length;i++){  
+				ret.add(Integer.valueOf(list[i]));  
+	        } 
+		}
+		return ret;
+	}
+	
+	public void setPasswd(ArrayList<Integer> passwd) {
+		SharedPreferences.Editor editor = mContext.getSharedPreferences("passwd", 0).edit();
+		String temp = new String();
+		for (int i = 0; i < passwd.size(); i++) {
+			temp += passwd.get(i) + ",";
+		}
+		editor.putString("gesture", temp);
+		editor.commit();
+	}
 }

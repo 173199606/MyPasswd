@@ -24,7 +24,11 @@
         <activity
             android:name="com.example.mypasswd.MainActivity"
             android:label="@string/app_name" >
+			<intent-filter>
+                <action android:name="android.intent.action.MAIN" />
 
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
         
         <activity
@@ -50,13 +54,13 @@
                 <action android:name="android.intent.action.CLOSE_SYSTEM_DIALOGS"></action>
             </intent-filter>
         </receiver>
-        <service android:name="com.example.mypasswd.MyService">
+        <service android:name="com.example.mypasswd.MyService" android:exported="false">
             <intent-filter >
                 <action android:name="com.example.mypasswd.Action.MyService"></action>
             </intent-filter>
         </service>
         
-        <service android:name="com.example.mypasswd.MyMoniterService" android:process=":moniter">
+        <service android:name="com.example.mypasswd.MyMoniterService" android:process=":moniter" android:exported="false">
             <intent-filter >
                 <action android:name="com.example.mypasswd.Action.MyMoniterService"></action>
             </intent-filter>

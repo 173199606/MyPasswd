@@ -28,7 +28,8 @@
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
         gesturelock:ncount="3"
-        gesturelock:trytime="3" >
+        gesturelock:trytime="3"
+        gesturelock:type="lock" >
     </com.example.mypasswd.lockview.MyLockView>
 
     <ViewStub

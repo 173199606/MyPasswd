@@ -1,9 +1,27 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:gesturelock="http://schemas.android.com/apk/res/com.example.mypasswd"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".MainActivity" >
 
-    
+    <TextView
+        android:id="@+id/tvshow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="设计密码界面"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:layout_gravity="center_horizontal" >
+    </TextView>
 
-</RelativeLayout>
+    <com.example.mypasswd.lockview.MyLockView
+        android:id="@+id/lockview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        gesturelock:ncount="3"
+        gesturelock:trytime="3" >
+    </com.example.mypasswd.lockview.MyLockView>
+
+</LinearLayout>
